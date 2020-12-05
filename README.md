@@ -11,6 +11,8 @@ The objective of this project is to apply what we've learned on data warehouses 
 [image3]: ./images/etl.jpg "Transformation of data"
 [image4]: ./images/redshift_stop.jpg "Stop of the redshift cluster"
 [image5]: ./images/star_schema.jpg "Star schema"
+[image6]: ./images/clster_info.jpg "Cluster Information"
+[image7]: ./images/clster_info.jpg "Cluster Information"
 
 ---
 
@@ -60,6 +62,7 @@ Stop the redshift cluster.
 ```
 ![alt text][image4]
 
+
 ---
 
 The summary of the files and folders within repo is provided in the table below:
@@ -103,7 +106,6 @@ The summary of the files and folders within repo is provided in the table below:
 4. Delete your redshift cluster when finished.
 
 
-
 ## [Rubric Points](https://review.udacity.com/#!/rubrics/2501/view)
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
@@ -115,7 +117,7 @@ A music streaming startup, Sparkify, has grown their user base and song database
 As their data engineer, you are tasked with building an ETL pipeline that extracts their data from S3, stages them in Redshift, and transforms data into a set of dimensional tables for their analytics team to continue finding insights in what songs their users are listening to. You'll be able to test your database and ETL pipeline by running queries given to you by the analytics team from Sparkify and compare your results with their expected results.
 
 
-## Schema definition.
+## Schema definition
 
 To represent this context a star schema has been used.
 
@@ -126,142 +128,53 @@ The songplays table is the core of this schema, is it our fact table and it cont
     * song_id REFERENCES songs(song_id)
     * artist_id REFERENCES artists(artist_id)
 
-There are also two staging tables; One for song dataset and one for event dataset.
-
+There are also two staging tables; One for event dataset and one for song dataset.
 ![alt text][image5]
 
-## Apache Cassandra.
 
-Aside from being a backbone for Facebook, Uber, and Netflix, Cassandra is a very scalable and resilient database that is easy to master and simple to configure. Apache Cassandra uses its own query language – CQL – which is similar to SQL. Note that JOINS, GROUP BY, or subqueries are not supported by CQL.
+## Preamble
 
-Some terms used in Cassandra differ from those we already know:
+In this project we are going to use two Amazon Web Services, S3 (Data storage) and Redshift (Data warehouse with columnar storage).
 
-A keyspace, for example, is analogous to the term database in a relational database.
+Data sources are provided by two public S3 buckets. One bucket contains info about songs and artists, the second has info concerning actions done by users (which song are listening, etc.. ). The objects contained in both buckets are JSON files. The song bucket has all the files under the same directory but the event ones don't, so we need a descriptor file (also a JSON) in order to extract data from the folders by path. We used a descriptor file because we don't have a common prefix on folders.
 
-Another example is a partition, which is a collection of rows. Cassandra organizes data into partitions; there, each partition consists of multiple columns.
-
-Partitions are stored on a node. Nodes (or servers) are generally part of a cluster where each node is responsible for a fraction of the partitions.
-
-The Primary Key defines how each row can be uniquely identified and how the data is distributed across the nodes in our system. A partition key is responsible for identifying the partition or node in the cluster that stores a row – whereas the purpose of a clustering key (or clustering column) is to store row data within a partition in a sorted order.
-
-When we have only one partition key and no clustering column, it is called a Single Primary Key. Should we use one (or more) partition key(s) and one (or more) clustering column(s) instead, we call it a Compound Primary Key or Composite Primary Key.
+The Redshift service is where data will be ingested and transformed, in fact though COPY command we will access to the JSON files inside the buckets and copy their content on our staging tables.
 
 
-## Data.
+## Redshift Considerations
 
-The data used in this project, it's better to understand what they represents.
+The schema design in redshift can heavily influence the query performance associated. Some relevant areas for query performance are:
 
-#### Song Dataset.
-
-We'll be working with dataset: event_data. The directory of CSV files partitioned by date. For example, here are the file paths for this dataset.
-
-```bash
-  event_data/2018-11-01-events.csv
-  event_data/2018-11-02-events.csv
-  event_data/2018-11-03-events.csv
-  .
-  .
-  event_data/2018-11-30-events.csv
-```
-
-These files are in CSV format and contains several records with the song data separated by a comma, below is an example of what a single song file, 2018-11-01-events.csv, looks like.
-
-```bash
-  Black Eyed Peas,Logged In,Sylvie,F,0,Cruz,214.93506,free,"Washington-Arlington-Alexandria, DC-VA-MD-WV",PUT,NextSong,1.54027E+12,9,Pump It,200,1.54111E+12,10
-```
-
-The code to pre-process the CSV files was provided already. So no need to go in-depth for it.
+    * Defining how redshift distributes data across nodes.
+    * Defining the sort keys, which can determine ordering and speed up joins.
+    * Definining foreign key and primarty key constraints.
 
 
-## ETL Pipeline.
+## Data Distribution
 
-Extract, transform, load (ETL) is the general procedure of copying data from one or more sources into a destination system which represents the data differently from, or in a different context than, the sources.
+How data is distributed is orchestrated by the selected distribution style. When using a 'KEY' distribution style, we inform redshift on how the data should be distributed across nodes, as data will be distributed such that data with that particular key are allocated to the same node.
 
-#### ETL Pipeline for Creating and Querying NoSQL Database.
+A good selection for this distribution keys is such that data is distributed evenly, such as to prevent performance hotspots, with collocating related data such that we can easily perform joins. We essentially want to perform joins on columns which are a distribution key for both the tables. Then, redshift can run joins locally instead of having to perform network I/O. We want to choose one dimension table to use as the distribution key for a fact table when using a star schema. We want to use the dimension table which is most commonly joined.
 
-We need to create a streamlined CSV file from all these. The final file will be used to extract and insert data into Apache Cassandra tables.
-
-The event_datafile_new.csv has 6821 rows and contains the following columns:
-
-* artist
-* firstName of user
-* gender of user
-* item number in session
-* last name of user
-* length of the song
-* level (paid or free song)
-* location of the user
-* sessionId
-* song title
-* userId
-
-The image below is a screenshot of what the denormalized data should appear like in the event_datafile_new.csv after the code above is run:
-
-![alt text][image2]
-
-## Apache Cassandra Coding Portion.
-
-We will model our data based on the queries provided to us by the analytics team at Sparkify. But first, let's setup Apache Cassandra for this. This is a three step process:
-
-#### Create a Cluster.
-
-We create a cluster and connect it to our local host. This makes a connection to a Cassandra instance on our local machine.
-
-```bash
-# This should make a connection to a Cassandra instance your local machine (127.0.0.1).
-from cassandra.cluster import Cluster
-
-try:
-    # Connect to local Apache Cassandra instance.
-    cluster = Cluster(['127.0.0.1'])
-    # To establish connection and begin executing queries, need a session.
-    session = cluster.connect()
-
-except Exception as e:
-    print(e)
-```
-
-#### Create a Keyspace.
-
-```bash
-# Create a keyspace called sparkify.
-try:
-    session.execute("""
-        CREATE KEYSPACE IF NOT EXISTS sparkify
-        WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1}"""
-    )
-
-except Exception as e:
-    print(e)
-```
-
-#### Set Keyspace.
-
-```bash
-# Set KEYSPACE to the keyspace specified above.
-try:
-    session.set_keyspace("sparkify")
-
-except Exception as e:
-    print(e)
-```
+For a slowly changing dimension table, of relatively small size (<1M entries in the case of Redshift) using an 'ALL' distribution style is a good choice. This distributes the table across all nodes for each of retrieval and performance.
 
 
-## Data Modeling.
+## Primary & Foreign Key Constraints
 
-In Apache Cassandra, we model our data based on the queries we will perform. Aggregation like GROUP BY, JOIN are highly discouraged in Cassandra. This is because we shouldn't scan the entire data because it is distributed on multiple nodes. It will slow down our system because sending all of that data from multiple nodes to a single machine will crash it.
-
-Now we will create the tables to run the following queries:
-
-1. Give me the artist, song title and song's length in the music app history that was heard during sessionId = 338, and itemInSession = 4.
-
-2. Give me only the following: name of artist, song (sorted by itemInSession) and user (first and last name) for userid = 10, sessionid = 182.
-
-3. Give me every user name (first and last) in my music app history who listened to the song "All Hands Against His Own".
-
-To gain more technical detail about the coding portion please view the ETL notebook.
+We can declare primary key and foreign key relationships between dimensions and fact tables for star schemas. Redshift uses this information to optimize queries, by eliminating redundant joins. We must ensure that primary key constraints are enforced, with no duplicate inserts.
 
 
-## Conclusion.
+## ETL process
 
-This project provides Sparkify startup customers with tools to analyze their data and help answer their key business questions, such as "Which artist and song was heard in a specified session," "Which artist, song and user was heard in a specified session," or "Which users heard a certain song".
+In this project most of ETL is done with SQL (Python used just as bridge), transformation and data normalization is done by Query, check out the sql_queries python module.
+
+
+## Comments.
+
+Information on the redshift cluster.
+![alt text][image6]
+
+All the queries that are executed in the cluster.
+![alt text][image7]
+
+A possible improvement for data management would have been to use a 'sort key' determines the order with which data is stored on disk for a particular table. Query Performance is increased when the sort key is used in the where clause. Only one sort key can be specified, with multiple columns. Using a 'Compound Key', specifies precedence in columns, and sorts by the first key, then the second key. 'Interleaved Keys', treat each column with equal importance. Compound keys can improve the performance of joins, group by, and order by statements.
