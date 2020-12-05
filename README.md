@@ -8,8 +8,8 @@ The objective of this project is to apply what we've learned on data warehouses 
 
 [image1]: ./images/redshift_start.jpg "Start of the redshift cluster"
 [image2]: ./images/create_tables.jpg "Creation of the tables"
-[image1]: ./images/etl.jpg "Transformation of data"
-[image2]: ./images/redshift_stop.jpg "Stop of the redshift cluster"
+[image3]: ./images/etl.jpg "Transformation of data"
+[image4]: ./images/redshift_stop.jpg "Stop of the redshift cluster"
 
 ---
 
