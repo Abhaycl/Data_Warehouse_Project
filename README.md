@@ -23,10 +23,10 @@ You will need to add aws access key and secret information to the dwf.cfg file, 
 
 We also have to create our security group which has to be assigned to the default VPC. Because the creation of our cluster has to belong to a VPC.
 
-NOTE: To follow IAC (Infrastructure as Code) practices, and to allow us to easily start and stop the redshift cluster to save costs, we can use the following scripts;
+**NOTE:** _To follow IAC (Infrastructure as Code) practices, and to allow us to easily start and stop the redshift cluster to save costs, we can use the following scripts;_
 
-    start_redshift.py
-    stop_redshift.py
+    redshift_start.py
+    redshift_stop.py
 
 The scripts will create/remove the neccessary resources for redshift to run.
 
