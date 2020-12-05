@@ -11,8 +11,8 @@ The objective of this project is to apply what we've learned on data warehouses 
 [image3]: ./images/etl.jpg "Transformation of data"
 [image4]: ./images/redshift_stop.jpg "Stop of the redshift cluster"
 [image5]: ./images/star_schema.jpg "Star schema"
-[image6]: ./images/clster_info.jpg "Cluster Information"
-[image7]: ./images/clster_info.jpg "Cluster Information"
+[image6]: ./images/cluster_info.jpg "Cluster Information"
+[image7]: ./images/star_schema.jpg "Star Schema"
 
 ---
 
