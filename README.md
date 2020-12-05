@@ -10,6 +10,7 @@ The objective of this project is to apply what we've learned on data warehouses 
 [image2]: ./images/create_tables.jpg "Creation of the tables"
 [image3]: ./images/etl.jpg "Transformation of data"
 [image4]: ./images/redshift_stop.jpg "Stop of the redshift cluster"
+[image5]: ./images/star_schema.jpg "Star schema"
 
 ---
 
@@ -35,25 +36,25 @@ For the execution of our own code, we go to the project workspace or to our own 
 
 In the project workspace we can open a terminal and run the following files:
 
-To start the redshift cluster.
+Start the redshift cluster.
 ```bash
   python redshift_start.py
 ```
 ![alt text][image1]
 
-To create the tables.
+Create the tables.
 ```bash
   python create_tables.py
 ```
 ![alt text][image2]
 
-For data transformations.
+Data transformations.
 ```bash
   python etl.py
 ```
 ![alt text][image3]
 
-To stop the redshift cluster.
+Stop the redshift cluster.
 ```bash
   python redshift_stop.py
 ```
@@ -114,18 +115,20 @@ A music streaming startup, Sparkify, has grown their user base and song database
 As their data engineer, you are tasked with building an ETL pipeline that extracts their data from S3, stages them in Redshift, and transforms data into a set of dimensional tables for their analytics team to continue finding insights in what songs their users are listening to. You'll be able to test your database and ETL pipeline by running queries given to you by the analytics team from Sparkify and compare your results with their expected results.
 
 
-## Denormalizing the Database.
+## Schema definition.
 
-The goal of denormalization in this context is to reduce the amount of time needed to read data. Unlike relational databases, non-relational databases have been optimized for fast reads and writes; therefore, denormalization is a must!
-Always thinking about the necessary queries first and designing the denormalization scheme accordingly. One table per query is a good strategy.
+To represent this context a star schema has been used.
 
-Denormalization changes the application: First, it means data redundancy, which translates to significantly increased storage costs. Second, fixing data inconsistency is now the main job of the application.
+The songplays table is the core of this schema, is it our fact table and it contains foreign keys to four tables:
 
-Again, Data Modeling in Apache Cassandra is query focused – and that focus needs to be put on the WHERE clause. This clause allows to do fast reads. Note that the partition key always needs to be included in the query! The clustering columns can be used to put the results in order.
+    * start_time REFERENCES time(start_time)
+    * user_id REFERENCES time(start_time)
+    * song_id REFERENCES songs(song_id)
+    * artist_id REFERENCES artists(artist_id)
 
-The tables that will contain the data of our consultations are:
+There are also two staging tables; One for song dataset and one for event dataset.
 
-![alt text][image1]
+![alt text][image5]
 
 ## Apache Cassandra.
 
