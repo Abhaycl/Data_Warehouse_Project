@@ -6,9 +6,10 @@ The objective of this project is to apply what we've learned on data warehouses 
 
 [//]: # (Image References)
 
-[image1]: ./images/tables.jpg "Database Tables for sparkify"
-[image2]: ./images/image_event_datafile_new.jpg "Denormalized dataset"
-
+[image1]: ./images/redshift_start.jpg "Start of the redshift cluster"
+[image2]: ./images/create_tables.jpg "Creation of the tables"
+[image1]: ./images/etl.jpg "Transformation of data"
+[image2]: ./images/redshift_stop.jpg "Stop of the redshift cluster"
 
 ---
 
@@ -38,20 +39,25 @@ To start the redshift cluster.
 ```bash
   python redshift_start.py
 ```
+![alt text][image1]
 
 To create the tables.
 ```bash
   python create_tables.py
 ```
+![alt text][image2]
 
 For data transformations.
 ```bash
   python etl.py
 ```
+![alt text][image3]
+
 To stop the redshift cluster.
 ```bash
   python redshift_stop.py
 ```
+![alt text][image4]
 
 ---
 
