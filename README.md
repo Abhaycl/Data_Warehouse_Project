@@ -154,7 +154,7 @@ To represent this context a star schema has been used.
 The songplays table is the core of this schema, is it our fact table and it contains foreign keys to four tables:
 
     * start_time REFERENCES time(start_time)
-    * user_id REFERENCES time(start_time)
+    * user_id REFERENCES users(user_id)
     * song_id REFERENCES songs(song_id)
     * artist_id REFERENCES artists(artist_id)
 
