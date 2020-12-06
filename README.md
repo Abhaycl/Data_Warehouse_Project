@@ -25,6 +25,36 @@ The requirements for the project are a valid aws account, with accompanying secu
 
 You will need to add aws access key and secret information to the dwf.cfg file, under [AWS_ACCESS]. This is not to be comitted to git.
 
+The parameterization of the dwh.cfg file is shown below.
+```code
+[CLUSTER]
+HOST=This parameter will be defined according to the configuration set up
+DB_NAME=This parameter will be defined according to the configuration set up
+DB_USER=This parameter will be defined according to the configuration set up
+DB_PASSWORD=This parameter will be defined according to the configuration set up
+DB_PORT=5439
+CLUSTER_IDENTIFIER=This parameter will be defined according to the configuration set up
+NODE_TYPE=ds2.xlarge
+NODE_COUNT=2
+
+[AWS_ACCESS]
+AWS_ACCESS_KEY_ID=This parameter will be defined according to the configuration set up
+AWS_SECRET_ACCESS_KEY=This parameter will be defined according to the configuration set up
+AWS_REGION=us-west-2
+
+[IAM_ROLE]
+NAME=dwhRole
+POLICY_NAME=AmazonS3ReadOnlyAccess
+ARN=arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+REDSHIFT_ARN=This parameter will be defined according to the configuration set up
+
+[S3]
+LOG_DATA=s3://udacity-dend/log_data
+LOG_JSONPATH=s3://udacity-dend/log_json_path.json
+SONG_DATA=s3://udacity-dend/song_data
+```
+
+
 We also have to create our security group which has to be assigned to the default VPC. Because the creation of our cluster has to belong to a VPC.
 
 **NOTE:** _To follow IAC (Infrastructure as Code) practices, and to allow us to easily start and stop the redshift cluster to save costs, we can use the following scripts;_
